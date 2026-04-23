@@ -186,7 +186,7 @@ Official `gpt-image-2` size constraints:
 - Total pixels must be at least `655,360` and at most `8,294,400`.
 - Outputs above `2560x1440` total pixels are described by OpenAI as experimental.
 
-The official Image API also documents streaming controls for image generation:
+The official Image API documents streaming controls for `gpt-image-2`, but this skill intentionally implements only non-streaming generation:
 
 | API field | Supported values | Skill support |
 | --- | --- | --- |
