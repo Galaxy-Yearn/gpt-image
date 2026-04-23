@@ -60,12 +60,16 @@ If Chinese text accuracy matters, make the rest of the image simpler.
 - Square, avatar, icon, 1:1 -> `--size 1024x1024`.
 - Wide, landscape, banner, hero -> `--size 1536x1024`.
 - Vertical, portrait, poster, phone wallpaper -> `--size 1024x1536`.
+- 2K square -> `--size 2048x2048`.
+- 2K wide -> `--size 2048x1152`.
+- 4K wide -> `--size 3840x2160`.
+- 4K vertical -> `--size 2160x3840`.
 - Draft, quick, cheap -> `--quality low`.
 - Balanced, standard -> `--quality medium`.
 - High quality, polished, final, detailed -> `--quality high`.
 - Requested PNG/JPEG/WebP -> `--output-format png|jpeg|webp`.
 - Multiple variants/options -> `--n <count>`, max 10.
-- Transparent background -> `--background transparent` with `--output-format png` or `--output-format webp`.
+- Transparent background -> not supported by this skill with `gpt-image-2`.
 - Based on this image / modify this poster / change part of the image -> use `edit`.
 - Replace only a selected area -> use `edit` with `--mask`.
 

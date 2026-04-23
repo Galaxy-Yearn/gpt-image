@@ -52,12 +52,13 @@ Aliases include `GPT_IMAGE_*` and selected `OPENAI_*` names.
 Use only these values:
 
 - `model`: `gpt-image-2` only. Default: `gpt-image-2`.
-- `size`: `auto`, `1024x1024`, `1536x1024`, `1024x1536`. Default: `auto`.
+- `size`: `auto` or `WIDTHxHEIGHT`. Default: `auto`.
+  Constraints: each edge `<= 3840`, both edges multiples of `16`, long:short ratio `<= 3:1`, total pixels `655,360..8,294,400`.
+  Common choices: `1024x1024`, `1536x1024`, `1024x1536`, `2048x2048`, `2048x1152`, `3840x2160`, `2160x3840`.
 - `quality`: `auto`, `low`, `medium`, `high`. Default: `auto`.
 - `output_format`: `png`, `jpeg`, `webp`. Default: `png`.
 - `n`: integer `1..10`. Default: `1`.
-- `background`: `auto`, `opaque`, `transparent`. Default: unset unless provided by `.env`.
-  Constraint: `transparent` only with `output_format=png` or `output_format=webp`.
+- `background`: `auto` or `opaque`. Default: unset unless provided by `.env`. Never use `transparent`.
 - `output_compression`: integer `0..100`. Use only with `output_format=jpeg` or `output_format=webp`.
 - `moderation`: `auto` or `low`. Default: unset unless provided by `.env`.
 - `extra`: `key=value` pass-through fields. Use only when you know the target endpoint accepts them for `gpt-image-2`.
@@ -74,6 +75,10 @@ Natural-language mapping:
 - Square, avatar, icon -> `--size 1024x1024`.
 - Wide, landscape, banner -> `--size 1536x1024`.
 - Vertical, portrait, poster, phone wallpaper -> `--size 1024x1536`.
+- 2K square -> `--size 2048x2048`.
+- 2K wide -> `--size 2048x1152`.
+- 4K wide -> `--size 3840x2160`.
+- 4K vertical -> `--size 2160x3840`.
 - Quick, draft, cheap -> `--quality low`.
 - Final, high quality, detailed -> `--quality high`.
 - Multiple variants -> `--n <count>`.

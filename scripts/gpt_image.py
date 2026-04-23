@@ -11,6 +11,7 @@ import base64
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import time
 from typing import Any
@@ -31,9 +32,13 @@ DEFAULT_N = 1
 SUPPORTED_MODEL = "gpt-image-2"
 SUPPORTED_QUALITIES = {"auto", "low", "medium", "high"}
 SUPPORTED_OUTPUT_FORMATS = {"png", "jpeg", "webp"}
-SUPPORTED_BACKGROUNDS = {None, "auto", "opaque", "transparent"}
+SUPPORTED_BACKGROUNDS = {None, "auto", "opaque"}
 SUPPORTED_MODERATIONS = {None, "auto", "low"}
-SUPPORTED_SIZES = {"auto", "1024x1024", "1536x1024", "1024x1536"}
+SIZE_RE = re.compile(r"^([1-9][0-9]*)x([1-9][0-9]*)$")
+MIN_PIXELS = 655_360
+MAX_PIXELS = 8_294_400
+MAX_EDGE = 3840
+MAX_RATIO = 3.0
 MAX_INPUT_IMAGES = 16
 MAX_INPUT_IMAGE_BYTES = 50 * 1024 * 1024
 MAX_MASK_BYTES = 4 * 1024 * 1024
@@ -156,9 +161,23 @@ def parse_int_value(value: str | int | None, name: str, *, minimum: int | None =
 def validate_size(value: str | None) -> None:
     if not value:
         die("--size is required after defaults are applied")
-    if value not in SUPPORTED_SIZES:
-        valid = ", ".join(sorted(SUPPORTED_SIZES))
-        die(f"--size must be one of: {valid}")
+    if value == "auto":
+        return
+    match = SIZE_RE.match(str(value))
+    if not match:
+        die("--size must be auto or WIDTHxHEIGHT, for example 1024x1024")
+    width = int(match.group(1))
+    height = int(match.group(2))
+    if width > MAX_EDGE or height > MAX_EDGE:
+        die("--size maximum edge length must be <= 3840px")
+    if width % 16 != 0 or height % 16 != 0:
+        die("--size width and height must both be multiples of 16")
+    ratio = max(width, height) / min(width, height)
+    if ratio > MAX_RATIO:
+        die("--size long edge to short edge ratio must not exceed 3:1")
+    pixels = width * height
+    if pixels < MIN_PIXELS or pixels > MAX_PIXELS:
+        die("--size total pixels must be between 655,360 and 8,294,400")
 
 
 def read_prompt(prompt: str | None, prompt_file: str | None) -> str:
@@ -423,7 +442,7 @@ def validate_payload(payload: dict[str, Any]) -> None:
         die(f"--quality must be one of: {valid}")
     background = payload.get("background")
     if background not in SUPPORTED_BACKGROUNDS:
-        die("--background must be one of: auto, opaque, transparent")
+        die("--background must be auto or opaque")
     moderation = payload.get("moderation")
     if moderation not in SUPPORTED_MODERATIONS:
         die("--moderation must be auto or low")
@@ -431,8 +450,6 @@ def validate_payload(payload: dict[str, Any]) -> None:
     output_compression = payload.get("output_compression")
     if output_compression is not None and output_format not in {"jpeg", "webp"}:
         die("--output-compression is only supported with --output-format jpeg or webp")
-    if background == "transparent" and output_format not in {"png", "webp"}:
-        die("--background transparent requires --output-format png or webp")
 
 
 def parse_response_bytes(raw: bytes) -> dict[str, Any]:
@@ -825,9 +842,9 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--out", default=DEFAULT_OUTPUT_PATH, help="Output file path")
     generate.add_argument("--out-dir", help="Output directory; writes image_1.ext, image_2.ext, ...")
     generate.add_argument("--n", type=int, help="Number of images to request")
-    generate.add_argument("--size", help="auto, 1024x1024, 1536x1024, or 1024x1536")
+    generate.add_argument("--size", help="auto or WIDTHxHEIGHT satisfying gpt-image-2 size constraints")
     generate.add_argument("--quality", help="auto, low, medium, or high")
-    generate.add_argument("--background", help="auto, opaque, or transparent")
+    generate.add_argument("--background", help="auto or opaque")
     generate.add_argument("--output-format", help="png, jpeg, or webp")
     generate.add_argument("--output-compression", type=int, help="0-100 for jpeg/webp when supported")
     generate.add_argument("--moderation", help="auto or low")
@@ -849,9 +866,9 @@ def build_parser() -> argparse.ArgumentParser:
     edit.add_argument("--out", default=DEFAULT_OUTPUT_PATH, help="Output file path")
     edit.add_argument("--out-dir", help="Output directory; writes image_1.ext, image_2.ext, ...")
     edit.add_argument("--n", type=int, help="Number of images to request")
-    edit.add_argument("--size", help="auto, 1024x1024, 1536x1024, or 1024x1536")
+    edit.add_argument("--size", help="auto or WIDTHxHEIGHT satisfying gpt-image-2 size constraints")
     edit.add_argument("--quality", help="auto, low, medium, or high")
-    edit.add_argument("--background", help="auto, opaque, or transparent")
+    edit.add_argument("--background", help="auto or opaque")
     edit.add_argument("--output-format", help="png, jpeg, or webp")
     edit.add_argument("--output-compression", type=int, help="0-100 for jpeg/webp when supported")
     edit.add_argument("--moderation", help="auto or low")

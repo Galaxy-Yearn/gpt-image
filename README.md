@@ -137,11 +137,11 @@ This skill implements these `gpt-image-2` request parameters:
 | --- | --- | --- |
 | `model` | `--model`, `MODEL` | `gpt-image-2` only |
 | `prompt` | `--prompt`, `--prompt-file` | Text prompt |
-| `size` | `--size`, `SIZE` | `auto`, `1024x1024`, `1536x1024`, `1024x1536` |
+| `size` | `--size`, `SIZE` | `auto` or `WIDTHxHEIGHT` satisfying the constraints below |
 | `quality` | `--quality`, `QUALITY` | `auto`, `low`, `medium`, `high` |
 | `output_format` | `--output-format`, `OUTPUT_FORMAT` | `png`, `jpeg`, `webp` |
 | `n` | `--n`, `N` | Integer `1..10` |
-| `background` | `--background`, `BACKGROUND` | `auto`, `opaque`, `transparent` |
+| `background` | `--background`, `BACKGROUND` | `auto`, `opaque` |
 | `output_compression` | `--output-compression`, `OUTPUT_COMPRESSION` | Integer `0..100`; only for `jpeg` and `webp` |
 | `moderation` | `--moderation`, `MODERATION` | `auto`, `low` |
 
@@ -155,11 +155,20 @@ Edit-only inputs:
 Rules enforced by the script:
 
 - `gpt-image-2` only.
-- `transparent` background only with `png` or `webp`.
+- `transparent` background is rejected.
 - `output_compression` only with `jpeg` or `webp`.
 - For `edit`, at least one `--image` is required.
 - For `edit`, `--mask` must be PNG with alpha and match the first input image size.
 - Do not send `input_fidelity` with `gpt-image-2`.
+
+Size constraints:
+
+- `auto` is supported.
+- Popular sizes include `1024x1024`, `1536x1024`, `1024x1536`, `2048x2048`, `2048x1152`, `3840x2160`, and `2160x3840`.
+- Custom `WIDTHxHEIGHT` is supported when both edges are multiples of `16px`.
+- Maximum edge length is `3840px`.
+- Long edge to short edge ratio must not exceed `3:1`.
+- Total pixels must be between `655,360` and `8,294,400`.
 
 Parameter precedence:
 
