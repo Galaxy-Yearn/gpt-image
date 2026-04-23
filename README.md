@@ -118,6 +118,46 @@ uv run python scripts/gpt_image.py generate \
   --out output/gpt-image/tea-poster.png
 ```
 
+## Example: Chinese Prompt To Final Image
+
+Original user request:
+
+```text
+生成一张高清竖版中文茶饮海报，主题是春日茶会，画面中有一杯冒着热气的茉莉花茶，阳光、茶叶、木桌，整体高级干净；图片中写“春日茶会”。
+```
+
+Prompt sent to `gpt-image-2`:
+
+```text
+A high-resolution vertical poster for a Chinese tea drink campaign. Centered composition with a steaming glass cup of jasmine tea on a warm wooden table, soft spring sunlight, fresh green tea leaves, subtle mist, elegant modern Chinese poster design, clean premium layout. Text: "春日茶会". Constraint: render exactly this Chinese text and no additional text; no watermark, no signature.
+```
+
+Generation parameters:
+
+```text
+model=gpt-image-2
+size=1024x1536
+quality=high
+output_format=png
+n=1
+```
+
+CLI call:
+
+```bash
+uv run python scripts/gpt_image.py generate \
+  --prompt-file tmp/gpt-image/spring-tea-poster.txt \
+  --size 1024x1536 \
+  --quality high \
+  --output-format png \
+  --n 1 \
+  --out output/gpt-image/spring-tea-poster.png
+```
+
+Result:
+
+![Spring tea poster example](assets/examples/spring-tea-poster.png)
+
 ## gpt-image-2 Parameters
 
 The non-streaming `POST /v1/images/generations` request for `gpt-image-2` uses these official parameters:
