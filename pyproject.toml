@@ -1,7 +1,7 @@
 [project]
 name = "codex-gpt-image-skill"
 version = "0.1.0"
-description = "Codex skill for generating images with GPT image models through a configurable OpenAI-compatible Images API."
+description = "Codex skill for generating images with gpt-image-2 through a configurable OpenAI-compatible Images API."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []

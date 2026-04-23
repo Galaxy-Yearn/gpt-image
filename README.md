@@ -1,16 +1,16 @@
 # GPT Image Skill
 
-Codex skill for generating raster images with GPT image models through an OpenAI-compatible Images API. It is designed for text-to-image workflows where Codex turns the user's request into a concise English image prompt, extracts generation parameters, and calls a configurable endpoint.
+Codex skill for generating raster images with `gpt-image-2` through an OpenAI-compatible Images API. It is designed for text-to-image workflows where Codex turns the user's request into a concise English image prompt, extracts generation parameters, and calls a configurable endpoint.
 
 ## Capabilities
 
-- Generate new images with `gpt-image-2` by default.
+- Generate new images with `gpt-image-2`.
 - Use a custom OpenAI-compatible `BASE_URL`.
 - Configure model, size, quality, output format, image count, moderation, background, compression, and timeout.
 - Convert Chinese image requests into English prompts while preserving requested in-image Chinese text verbatim.
 - Save generated images to local project paths.
 
-This skill only supports image generation. It does not edit existing images.
+This skill only supports `gpt-image-2` image generation. It does not edit existing images and does not support other image models.
 
 ## Requirements
 
@@ -71,7 +71,7 @@ QUALITY=auto
 OUTPUT_FORMAT=png
 N=1
 BACKGROUND=auto
-OUTPUT_COMPRESSION=90
+# OUTPUT_COMPRESSION=90
 MODERATION=auto
 TIMEOUT_SECONDS=600
 ```
@@ -118,18 +118,53 @@ uv run python scripts/gpt_image.py generate \
   --out output/gpt-image/tea-poster.png
 ```
 
-## Parameters
+## gpt-image-2 Parameters
 
-- `--model`: image model; defaults to `gpt-image-2`.
-- `--size`: `auto`, `1024x1024`, `1536x1024`, `1024x1536`, or another provider-supported size.
-- `--quality`: `auto`, `low`, `medium`, or `high`.
-- `--output-format`: `png`, `jpeg`, or `webp`.
-- `--n`: number of images, `1..10`.
-- `--background`: `auto` or `opaque` for default `gpt-image-2`.
-- `--output-compression`: `0..100` for compressed formats when supported.
-- `--moderation`: provider-supported moderation value.
-- `--extra key=value`: pass through provider-specific fields.
+The non-streaming `POST /v1/images/generations` request for `gpt-image-2` uses these official parameters:
+
+| API field | CLI flag / config | Supported values |
+| --- | --- | --- |
+| `model` | `--model`, `MODEL` | `gpt-image-2` only |
+| `prompt` | `--prompt` or `--prompt-file` | Text prompt |
+| `size` | `--size`, `SIZE` | `auto` or `WIDTHxHEIGHT` satisfying the gpt-image-2 constraints below |
+| `quality` | `--quality`, `QUALITY` | `auto`, `low`, `medium`, `high` |
+| `output_format` | `--output-format`, `OUTPUT_FORMAT` | `png`, `jpeg`, `webp` |
+| `n` | `--n`, `N` | Integer `1..10` |
+| `background` | `--background`, `BACKGROUND` | `auto`, `opaque` |
+| `output_compression` | `--output-compression`, `OUTPUT_COMPRESSION` | Integer `0..100`; only for `jpeg` and `webp` |
+| `moderation` | `--moderation`, `MODERATION` | `auto`, `low` |
+
+`gpt-image-2` does not support transparent backgrounds. This skill rejects `--background transparent`.
+
+Official `gpt-image-2` size constraints:
+
+- `auto` is supported.
+- Popular fixed sizes include `1024x1024`, `1536x1024`, `1024x1536`, `2048x2048`, `2048x1152`, `3840x2160`, and `2160x3840`.
+- Maximum edge length must be `<= 3840px`.
+- Both edges must be multiples of `16px`.
+- Long edge to short edge ratio must not exceed `3:1`.
+- Total pixels must be at least `655,360` and at most `8,294,400`.
+- Outputs above `2560x1440` total pixels are described by OpenAI as experimental.
+
+The official Image API also documents streaming controls for image generation:
+
+| API field | Supported values | Skill support |
+| --- | --- | --- |
+| `stream` | Boolean | Not implemented in this skill |
+| `partial_images` | Integer `0..3` | Not implemented in this skill |
+
+Utility-only script flags:
+
+- `--extra key=value`: pass through an additional field only if it is compatible with `gpt-image-2`.
 - `--dry-run`: print endpoint, output paths, and JSON payload without calling the API.
+- `--out` / `--out-dir`: choose local save paths.
+- `--env`, `--base-url`, `--api-key`, `--timeout`, `--force`: local execution controls, not model parameters.
+
+Official references:
+
+- Image generation guide: https://platform.openai.com/docs/guides/image-generation
+- Image API reference: https://platform.openai.com/docs/api-reference/images/create
+- gpt-image-2 model page: https://platform.openai.com/docs/models/gpt-image-2
 
 Parameter precedence:
 

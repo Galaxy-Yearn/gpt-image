@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate images through an OpenAI-compatible Images API.
+"""Generate images with gpt-image-2 through an OpenAI-compatible Images API.
 
 Configuration is read from the skill-local .env file by default.
 """
@@ -11,6 +11,7 @@ import base64
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import time
 from typing import Any
@@ -27,6 +28,16 @@ DEFAULT_OUTPUT_FORMAT = "png"
 DEFAULT_OUTPUT_PATH = "output/gpt-image/output.png"
 DEFAULT_TIMEOUT_SECONDS = 600
 DEFAULT_N = 1
+SUPPORTED_MODEL = "gpt-image-2"
+SUPPORTED_QUALITIES = {"auto", "low", "medium", "high"}
+SUPPORTED_OUTPUT_FORMATS = {"png", "jpeg", "webp"}
+SUPPORTED_BACKGROUNDS = {None, "auto", "opaque"}
+SUPPORTED_MODERATIONS = {None, "auto", "low"}
+SIZE_RE = re.compile(r"^([1-9][0-9]*)x([1-9][0-9]*)$")
+MIN_PIXELS = 655_360
+MAX_PIXELS = 8_294_400
+MAX_EDGE = 3840
+MAX_RATIO = 3.0
 
 
 def die(message: str, code: int = 1) -> None:
@@ -96,9 +107,19 @@ def normalize_output_format(value: str | None) -> str:
     fmt = (value or DEFAULT_OUTPUT_FORMAT).lower().strip()
     if fmt == "jpg":
         return "jpeg"
-    if fmt not in {"png", "jpeg", "webp"}:
+    if fmt not in SUPPORTED_OUTPUT_FORMATS:
         die("--output-format must be png, jpeg, jpg, or webp")
     return fmt
+
+
+def normalize_optional_choice(value: str | None, name: str, choices: set[str | None]) -> str | None:
+    if value in (None, ""):
+        return None
+    normalized = str(value).lower().strip()
+    if normalized not in choices:
+        valid = ", ".join(sorted(v for v in choices if v is not None))
+        die(f"{name} must be one of: {valid}")
+    return normalized
 
 
 def normalize_base_url(value: str) -> str:
@@ -123,6 +144,28 @@ def parse_int_value(value: str | int | None, name: str, *, minimum: int | None =
     if maximum is not None and parsed > maximum:
         die(f"{name} must be <= {maximum}")
     return parsed
+
+
+def validate_size(value: str | None) -> None:
+    if value == "auto":
+        return
+    if not value:
+        die("--size is required after defaults are applied")
+    match = SIZE_RE.match(str(value))
+    if not match:
+        die("--size must be auto or WIDTHxHEIGHT, for example 1024x1024")
+    width = int(match.group(1))
+    height = int(match.group(2))
+    if width > MAX_EDGE or height > MAX_EDGE:
+        die("--size maximum edge length must be <= 3840px")
+    if width % 16 != 0 or height % 16 != 0:
+        die("--size width and height must both be multiples of 16")
+    ratio = max(width, height) / min(width, height)
+    if ratio > MAX_RATIO:
+        die("--size long edge to short edge ratio must not exceed 3:1")
+    pixels = width * height
+    if pixels < MIN_PIXELS or pixels > MAX_PIXELS:
+        die("--size total pixels must be between 655,360 and 8,294,400")
 
 
 def read_prompt(prompt: str | None, prompt_file: str | None) -> str:
@@ -182,9 +225,24 @@ def build_output_paths(out: str, out_dir: str | None, fmt: str, count: int) -> l
 
 def validate_payload(payload: dict[str, Any]) -> None:
     model = str(payload.get("model", ""))
+    if model != SUPPORTED_MODEL:
+        die(f"This skill only supports model {SUPPORTED_MODEL}")
+    size = payload.get("size")
+    validate_size(str(size) if size is not None else None)
+    quality = payload.get("quality")
+    if quality not in SUPPORTED_QUALITIES:
+        valid = ", ".join(sorted(SUPPORTED_QUALITIES))
+        die(f"--quality must be one of: {valid}")
     background = payload.get("background")
-    if model == "gpt-image-2" and background == "transparent":
-        die("gpt-image-2 does not support --background transparent; use auto/opaque or another model")
+    if background not in SUPPORTED_BACKGROUNDS:
+        die("--background must be auto or opaque; gpt-image-2 does not support transparent background")
+    moderation = payload.get("moderation")
+    if moderation not in SUPPORTED_MODERATIONS:
+        die("--moderation must be auto or low")
+    output_format = payload.get("output_format")
+    output_compression = payload.get("output_compression")
+    if output_compression is not None and output_format not in {"jpeg", "webp"}:
+        die("--output-compression is only supported with --output-format jpeg or webp")
 
 
 def ensure_writable(paths: list[Path], force: bool) -> None:
@@ -305,10 +363,14 @@ def build_payload(args: argparse.Namespace, file_values: dict[str, str]) -> tupl
             DEFAULT_OUTPUT_FORMAT,
         )
     )
-    background = first_value(
-        args.background,
-        file_values,
-        ("BACKGROUND", "GPT_IMAGE_BACKGROUND", "OPENAI_IMAGE_BACKGROUND"),
+    background = normalize_optional_choice(
+        first_value(
+            args.background,
+            file_values,
+            ("BACKGROUND", "GPT_IMAGE_BACKGROUND", "OPENAI_IMAGE_BACKGROUND"),
+        ),
+        "BACKGROUND",
+        SUPPORTED_BACKGROUNDS,
     )
     output_compression = parse_int_value(
         first_value(
@@ -320,10 +382,14 @@ def build_payload(args: argparse.Namespace, file_values: dict[str, str]) -> tupl
         minimum=0,
         maximum=100,
     )
-    moderation = first_value(
-        args.moderation,
-        file_values,
-        ("MODERATION", "GPT_IMAGE_MODERATION", "OPENAI_IMAGE_MODERATION"),
+    moderation = normalize_optional_choice(
+        first_value(
+            args.moderation,
+            file_values,
+            ("MODERATION", "GPT_IMAGE_MODERATION", "OPENAI_IMAGE_MODERATION"),
+        ),
+        "MODERATION",
+        SUPPORTED_MODERATIONS,
     )
     n = parse_int_value(
         first_value(
@@ -405,7 +471,7 @@ def command_generate(args: argparse.Namespace) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate images with an OpenAI-compatible Images API")
+    parser = argparse.ArgumentParser(description="Generate images with gpt-image-2 through an OpenAI-compatible Images API")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     generate = subparsers.add_parser("generate", help="Generate new image(s) from a text prompt")
@@ -414,16 +480,16 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--out", default=DEFAULT_OUTPUT_PATH, help="Output file path")
     generate.add_argument("--out-dir", help="Output directory; writes image_1.ext, image_2.ext, ...")
     generate.add_argument("--n", type=int, help="Number of images to request")
-    generate.add_argument("--size", help="Image size, e.g. auto, 1024x1024, 1536x1024, 1024x1536")
-    generate.add_argument("--quality", help="Quality value supported by the endpoint")
-    generate.add_argument("--background", help="opaque, auto, or a provider-supported value")
+    generate.add_argument("--size", help="auto or WIDTHxHEIGHT satisfying gpt-image-2 size constraints")
+    generate.add_argument("--quality", help="auto, low, medium, or high")
+    generate.add_argument("--background", help="auto or opaque")
     generate.add_argument("--output-format", help="png, jpeg, or webp")
     generate.add_argument("--output-compression", type=int, help="0-100 for jpeg/webp when supported")
-    generate.add_argument("--moderation", help="Moderation value supported by the endpoint")
+    generate.add_argument("--moderation", help="auto or low")
     generate.add_argument("--extra", action="append", default=[], help="Provider-specific key=value JSON/string field")
     generate.add_argument("--base-url", help="OpenAI-compatible base URL, including the API path such as /v1")
     generate.add_argument("--api-key", help="API key. Prefer .env instead of passing this in shell history")
-    generate.add_argument("--model", help="Model override; defaults to gpt-image-2")
+    generate.add_argument("--model", help="Must be gpt-image-2")
     generate.add_argument("--env", help="Path to .env file; defaults to the skill-local .env")
     generate.add_argument("--timeout", type=int, help="HTTP timeout in seconds")
     generate.add_argument("--force", action="store_true", help="Overwrite existing output files")

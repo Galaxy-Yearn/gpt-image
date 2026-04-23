@@ -1,15 +1,15 @@
 ---
 name: gpt-image
-description: Generate raster images with GPT image models through a configurable OpenAI-compatible Images API. Use for text-to-image generation, including Chinese requests that should become English prompts while preserving requested in-image Chinese text verbatim.
+description: Generate raster images with gpt-image-2 through a configurable OpenAI-compatible Images API. Use for text-to-image generation, including Chinese requests that should become English prompts while preserving requested in-image Chinese text verbatim.
 ---
 
 # GPT Image
 
-Use `scripts/gpt_image.py` to generate images through `{BASE_URL}/images/generations`. `BASE_URL` is complete and user-provided; do not append or rewrite it.
+Use `scripts/gpt_image.py` to generate images with `gpt-image-2` through `{BASE_URL}/images/generations`. `BASE_URL` is complete and user-provided; do not append or rewrite it.
 
 ## Rules
 
-- Generate new raster images only. Do not use this skill for editing existing images.
+- Generate new raster images only with `gpt-image-2`. Do not use this skill for editing existing images or other image models.
 - Read configuration from the skill-local `.env`; never ask the user to paste an API key in chat.
 - Convert visual instructions to a concise English prompt.
 - Keep Chinese only when it must appear inside the image, quoted exactly.
@@ -43,15 +43,15 @@ Aliases include `GPT_IMAGE_*` and selected `OPENAI_*` names.
 
 ## Parameters
 
-- `--model`: defaults to `gpt-image-2`.
-- `--size`: `auto`, `1024x1024`, `1536x1024`, `1024x1536`, or another provider-supported size.
+- `--model`: must be `gpt-image-2`.
+- `--size`: `auto` or `WIDTHxHEIGHT` satisfying gpt-image-2 constraints: each edge <= 3840, both edges multiples of 16, ratio <= 3:1, total pixels 655,360..8,294,400.
 - `--quality`: `auto`, `low`, `medium`, or `high`.
 - `--output-format`: `png`, `jpeg`, or `webp`.
 - `--n`: `1..10`.
-- `--background`: `auto` or `opaque` for default `gpt-image-2`; do not use `transparent` unless a compatible model/provider is configured.
-- `--output-compression`: `0..100` for compressed formats when supported.
-- `--moderation`: provider-supported moderation value.
-- `--extra key=value`: pass through provider-specific fields.
+- `--background`: `auto` or `opaque`; `transparent` is not supported.
+- `--output-compression`: `0..100`, only with `jpeg` or `webp`.
+- `--moderation`: `auto` or `low`.
+- `--extra key=value`: pass through provider-specific fields only if compatible with `gpt-image-2`.
 
 Natural-language mapping:
 
