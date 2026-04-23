@@ -33,8 +33,6 @@ N=1
 
 Optional keys: `BACKGROUND`, `OUTPUT_COMPRESSION`, `MODERATION`, `TIMEOUT_SECONDS`.
 
-This skill intentionally does not implement Image API streaming fields (`stream`, `partial_images`).
-
 Precedence:
 
 ```text

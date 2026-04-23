@@ -160,7 +160,7 @@ Result:
 
 ## gpt-image-2 Parameters
 
-The non-streaming `POST /v1/images/generations` request for `gpt-image-2` uses these official parameters:
+The `POST /v1/images/generations` request used by this skill accepts these `gpt-image-2` parameters:
 
 | API field | CLI flag / config | Supported values |
 | --- | --- | --- |
@@ -185,13 +185,6 @@ Official `gpt-image-2` size constraints:
 - Long edge to short edge ratio must not exceed `3:1`.
 - Total pixels must be at least `655,360` and at most `8,294,400`.
 - Outputs above `2560x1440` total pixels are described by OpenAI as experimental.
-
-The official Image API documents streaming controls for `gpt-image-2`, but this skill intentionally implements only non-streaming generation:
-
-| API field | Supported values | Skill support |
-| --- | --- | --- |
-| `stream` | Boolean | Not implemented in this skill |
-| `partial_images` | Integer `0..3` | Not implemented in this skill |
 
 Utility-only script flags:
 
