@@ -26,7 +26,7 @@ DEFAULT_MODEL = "gpt-image-2"
 DEFAULT_SIZE = "auto"
 DEFAULT_QUALITY = "auto"
 DEFAULT_OUTPUT_FORMAT = "png"
-DEFAULT_OUTPUT_PATH = "output/gpt-image/output.png"
+DEFAULT_OUTPUT_PATH = "gpt-image/output.png"
 DEFAULT_TIMEOUT_SECONDS = 600
 DEFAULT_N = 1
 SUPPORTED_MODEL = "gpt-image-2"
@@ -887,11 +887,6 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
-
-    if args.n is not None and (args.n < 1 or args.n > 10):
-        die("--n must be between 1 and 10")
-    if args.output_compression is not None and not (0 <= args.output_compression <= 100):
-        die("--output-compression must be between 0 and 100")
 
     args.func(args)
     return 0

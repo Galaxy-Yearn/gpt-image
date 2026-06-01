@@ -1,29 +1,36 @@
 # Prompting
 
-Use this reference only when prompt shaping matters.
+Use this only when prompt shaping matters.
 
-## Contract
+Read this when:
 
-Return a compact English prompt and separate image parameters:
+- the request is vague and needs a stronger visual direction
+- the request is text-heavy and in-image text accuracy matters
+- the request is style-sensitive and wording will change the result
+- an edit needs precise keep/change instructions
+
+## Output Contract
+
+Return:
 
 ```text
 Prompt: <English visual prompt>
 Parameters: size=<...>, quality=<...>, output_format=<...>, n=<...>
 ```
 
-Never hide API controls inside the prompt. Pass `size`, `quality`, `output_format`, `n`, `background`, `moderation`, and compression as CLI flags.
+Keep API controls out of the prompt. Pass `size`, `quality`, `output_format`, `n`, `background`, `moderation`, and compression as CLI flags.
 
-For edits, describe what to keep and what to change. Do not describe the upload itself.
+For edits, describe what to keep and what to change. Do not describe file uploads, masks, or commands inside the prompt.
 
-## Strong Prompt Pattern
+## Prompt Pattern
 
-Keep it short, concrete, and visual:
+Keep it short, visual, and concrete:
 
 ```text
 <subject and medium>. <composition and setting>. <lighting and color>. <key materials/details>. <constraints>.
 ```
 
-Good prompt traits:
+Use:
 
 - Lead with the subject and output medium.
 - Use visible details only.
@@ -31,7 +38,7 @@ Good prompt traits:
 - Add composition only if it changes the result.
 - For edits, explicitly preserve layout, subject, or scene elements that must remain.
 - For edits, state the exact visual changes instead of rewriting the whole scene from scratch.
-- End with constraints: `no watermark, no signature, no extra text`.
+- End with constraints such as `no watermark, no signature, no extra text`.
 - If visible text is required, quote it exactly and request no additional text.
 
 Avoid:
@@ -73,43 +80,30 @@ If Chinese text accuracy matters, make the rest of the image simpler.
 - Based on this image / modify this poster / change part of the image -> use `edit`.
 - Replace only a selected area -> use `edit` with `--mask`.
 
-## Examples
+## Better Prompt Shapes
 
-Chinese request:
+Weak:
 
 ```text
-生成一张高清竖版春节海报，红金配色，上面写“新春快乐”
+A beautiful premium poster for a tea brand, very artistic and cinematic.
 ```
 
-Use:
+Better:
 
 ```text
-Prompt: A polished vertical Lunar New Year poster illustration. Centered festive composition with elegant paper-cut motifs, lantern silhouettes, and balanced decorative framing. Rich red and metallic gold palette with warm celebratory lighting. Text: "新春快乐". Constraint: render exactly this Chinese text and no additional text; no watermark, no signature.
+Prompt: A premium vertical tea campaign poster. Centered product composition with a clear glass cup of jasmine tea on a warm wooden table, soft spring sunlight, fresh green tea leaves, and a clean editorial layout. Text: "春日茶会". Constraint: render exactly this Chinese text and no additional text; no watermark, no signature.
 Parameters: size=1024x1536, quality=high, output_format=png, n=1
 ```
 
-Chinese request:
+Weak edit:
 
 ```text
-给我三个宽屏咖啡杯产品图，快速草稿
+Change this poster into a summer version.
 ```
 
-Use:
+Better edit:
 
 ```text
-Prompt: A clean studio product photograph of a ceramic coffee cup. Wide landscape composition with subtle negative space, warm neutral background, soft morning light, glazed ceramic texture, gentle reflections. Constraints: no logo, no text, no watermark, no signature.
-Parameters: size=1536x1024, quality=low, output_format=png, n=3
-```
-
-Chinese edit request:
-
-```text
-基于这张海报改成夏日冰茶版本，保留高级版式，把热茶改成冰茶，标题改成“夏日茶会”
-```
-
-Use:
-
-```text
-Prompt: Turn this existing premium tea poster into a summer iced tea version. Keep the elegant poster layout and centered product composition. Replace the hot tea with iced jasmine tea with visible ice cubes, brighter daylight, and a cleaner refreshing summer mood. Text: "夏日茶会". Constraint: render exactly this Chinese text and no additional text; no watermark, no signature.
+Prompt: Turn this existing premium tea poster into a summer iced tea version. Keep the elegant poster layout and centered product composition. Replace the hot tea with iced jasmine tea with visible ice cubes, brighter daylight, cooler green-cyan tones, and a cleaner refreshing summer mood. Text: "夏日茶会". Constraint: render exactly this Chinese text and no additional text; no watermark, no signature.
 Parameters: size=1024x1536, quality=high, output_format=png, n=1
 ```

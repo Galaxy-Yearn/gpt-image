@@ -1,8 +1,7 @@
 .env
 .env.*
 !.env.example
-output/
-tmp/
+gpt-image/
 __pycache__/
 *.py[cod]
 .venv/
