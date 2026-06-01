@@ -25,23 +25,37 @@ The script uses only the Python standard library.
 
 ## Install
 
+### Global install
+
+macOS / Linux:
+
 ```bash
 git clone https://github.com/Galaxy-Yearn/gpt-image.git ~/.codex/skills/gpt-image
 ```
 
-PowerShell:
+Windows PowerShell:
 
 ```powershell
-git clone https://github.com/Galaxy-Yearn/gpt-image.git "$env:USERPROFILE\.codex\skills\gpt-image"
+git clone https://github.com/Galaxy-Yearn/gpt-image.git "$HOME\.codex\skills\gpt-image"
 ```
 
-If `CODEX_HOME` is set, install under:
+### Project-local install
+
+macOS / Linux:
 
 ```bash
-$CODEX_HOME/skills/gpt-image
+git clone https://github.com/Galaxy-Yearn/gpt-image.git .agents/skills/gpt-image
 ```
 
-This path is only for the skill itself. Generated prompts and images should go in the user's workspace, not under `.codex/`.
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/Galaxy-Yearn/gpt-image.git ".agents\skills\gpt-image"
+```
+
+Use the global install for all workspaces, or the project-local install for one repository only.
+On Windows, use `$HOME` instead of `~`.
+After installing, restart Codex. Generated prompt files and images should stay in the active workspace, usually under `gpt-image/`.
 
 ## Configuration
 
@@ -216,3 +230,7 @@ Edited poster:
 - [Images create API](https://platform.openai.com/docs/api-reference/images/create)
 - [Images edit API](https://platform.openai.com/docs/api-reference/images/create-edit)
 - [`gpt-image-2` model page](https://platform.openai.com/docs/models/gpt-image-2)
+
+## License
+
+MIT. See [LICENSE](LICENSE).
